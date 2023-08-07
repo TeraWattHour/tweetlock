@@ -1,0 +1,110 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  serverless tweetlock aye
+
+Globals:
+  Function:
+    Timeout: 5
+    MemorySize: 128
+
+Resources:
+  VotesFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: cmd/tweetlock/votes/
+      Handler: votes
+      Runtime: go1.x
+      Architectures:
+        - x86_64
+      Events:
+        CatchAll:
+          Type: Api
+          Properties:
+            Path: /vote-count
+            Method: GET
+        Vote:
+          Type: Api
+          Properties:
+            Path: /vote/{target}
+            Method: ANY
+      Environment:
+        Variables:
+          DB_DSN: "{{resolve:secretsmanager:prod/TweetLock:SecretString:DB_DSN}}"
+          ACCESS_SECRET: "{{resolve:secretsmanager:prod/TweetLock:SecretString:ACCESS_SECRET}}"
+  AuthFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: cmd/tweetlock/auth/
+      Handler: auth
+      Runtime: go1.x
+      Architectures:
+        - x86_64
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref SessionsTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref UsersTable
+      Events:
+        CatchAll:
+          Type: Api
+          Properties:
+            Path: /refresh
+            Method: POST
+        TwitterRedirect:
+          Type: Api
+          Properties:
+            Path: /twitter-redirect
+            Method: GET
+        TwitterCallback:
+          Type: Api
+          Properties:
+            Path: /twitter-callback
+            Method: GET
+      Environment:
+        Variables:
+          DB_DSN: "{{resolve:secretsmanager:prod/TweetLock:SecretString:DB_DSN}}"
+          ACCESS_SECRET: "{{resolve:secretsmanager:prod/TweetLock:SecretString:ACCESS_SECRET}}"
+          REFRESH_SECRET: "{{resolve:secretsmanager:prod/TweetLock:SecretString:REFRESH_SECRET}}"
+          TWITTER_CLIENT_ID: "{{resolve:secretsmanager:prod/TweetLock:SecretString:TWITTER_CLIENT_ID}}"
+          TWITTER_CLIENT_SECRET: "{{resolve:secretsmanager:prod/TweetLock:SecretString:TWITTER_CLIENT_SECRET}}"
+          TWITTER_REDIRECT: "{{resolve:secretsmanager:prod/TweetLock:SecretString:TWITTER_REDIRECT}}"
+          COOKIE_DOMAIN: "{{resolve:secretsmanager:prod/TweetLock:SecretString:COOKIE_DOMAIN}}"
+
+  SessionsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: tweetlock-sessions
+      AttributeDefinitions:
+        - AttributeName: session_id
+          AttributeType: S
+        - AttributeName: user_id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: session_id
+          KeyType: HASH
+        - AttributeName: user_id
+          KeyType: RANGE
+      TimeToLiveSpecification:
+        AttributeName: expires_at
+        Enabled: true
+      ProvisionedThroughput:
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1
+  UsersTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: tweetlock-users
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+        - AttributeName: twitter_id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+        - AttributeName: twitter_id
+          KeyType: RANGE
+      ProvisionedThroughput:
+        ReadCapacityUnits: 1
+        WriteCapacityUnits: 1

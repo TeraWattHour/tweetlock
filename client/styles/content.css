@@ -1,0 +1,116 @@
+.tl__wrapper {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    left: 0;
+    width: auto;
+    height: 36px;
+    font-weight: 400;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.4);
+    font-family:
+        "TwitterChirp",
+        "Roboto",
+        system-ui,
+        -apple-system,
+        sans-serif;
+}
+
+.tl__container {
+    height: 100%;
+    width: 100%;
+    position: relative;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+.tl__container > :not(:last-child) {
+    margin-right: 32px;
+}
+
+.tl__action {
+    flex-shrink: 0;
+    white-space: nowrap;
+    all: unset;
+    cursor: pointer;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    place-items: center;
+}
+
+.tl__action[data-tlstatus="loading"] {
+    animation: pulse 2s infinite alternate ease-in-out;
+}
+
+.tl__action * {
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+/* Action icon background */
+.tl__action .tl__icon-container::after {
+    content: "";
+    position: absolute;
+    display: block;
+    left: 50%;
+    top: 50%;
+    transform: translateX(-50%) translateY(-50%);
+    height: 34px;
+    width: 34px;
+    border-radius: 50%;
+}
+
+.tl__action:not(:disabled):hover .tl__icon-container::after {
+    background-color: rgba(255, 0, 0, 0.1);
+}
+
+.tl__action:disabled {
+    cursor: not-allowed;
+}
+
+.tl__action .tl__icon-container {
+    position: relative;
+    margin-right: 12px;
+    display: grid;
+    place-items: center;
+}
+
+.tl__action .tl__icon-container svg {
+    height: 18px;
+    width: 18px;
+}
+
+/* Shame button with vote display */
+.tl__action.tl__action--shame.active {
+    fill: rgb(249, 24, 128);
+    color: rgb(249, 24, 128);
+}
+
+.tl__action:not(:disabled).tl__action--shame:hover {
+    color: rgb(249, 24, 128);
+}
+
+.tl__action:not(:disabled).tl__action--shame:hover div::after {
+    background-color: rgba(249, 24, 128, 0.1);
+}
+
+/* One click block button */
+.tl__action.tl__action--block:hover {
+    color: rgb(255, 0, 0);
+}
+
+@keyframes pulse {
+    90% {
+        opacity: 100%;
+    }
+
+    40% {
+        opacity: 40%;
+    }
+
+    10% {
+        opacity: 100%;
+    }
+}
